@@ -1,5 +1,6 @@
 import {
   CreateStockMovement,
+  RegisterStockMovement,
   StockMovement,
   StockMovementRepository,
 } from "../interfaces/stock.js";
@@ -14,17 +15,39 @@ class StockMovementService {
     this.productService = new ProductService();
   }
 
-  async register(data: CreateStockMovement): Promise<null | StockMovement> {
-    const productExist = await this.productService.getProduct({
-      ownerId: data.userId,
+  async register(
+    data: CreateStockMovement
+  ): Promise<null | RegisterStockMovement> {
+    const productExist = await this.productService.getById({
       id: data.productId,
     });
 
     if (!productExist) return null;
 
-    const result = await this.stockMovementRepository.create(data);
+    const { productId, quantity, type } = data;
 
-    if (!result) return null;
+    const productUpdate = await this.productService.updateStock({
+      product: productExist,
+      productId,
+      quantity,
+      type,
+    });
+
+    if (!productUpdate) return null;
+
+    const register = await this.stockMovementRepository.create(data);
+
+    if (!register) return null;
+
+    const result = {
+      product: productUpdate,
+      id: register.id,
+      productId: register.productId,
+      userId: register.userId,
+      type: register.type,
+      quantity: register.quantity,
+      createAt: register.createAt,
+    };
 
     return result;
   }

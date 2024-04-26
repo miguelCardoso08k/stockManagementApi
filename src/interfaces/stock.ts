@@ -1,17 +1,23 @@
+import { Product } from "./products.js";
+
 export interface StockMovement {
   id: string;
   userId: string;
   productId: string;
   quantity: number;
-  type: string;
+  type: "stockIn" | "stockOut";
   createAt?: Date;
+}
+
+export interface RegisterStockMovement extends StockMovement {
+  product: Product;
 }
 
 export interface CreateStockMovement {
   userId: string;
   productId: string;
   quantity: number;
-  type: string;
+  type: "stockIn" | "stockOut";
 }
 
 export interface StockMovementRepository {

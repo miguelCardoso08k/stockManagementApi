@@ -18,7 +18,7 @@ class ProductService {
       name: data.name,
     });
 
-    if (Array.isArray(productExist) && productExist.length > 0) return null;
+    if (productExist) return null;
 
     const result = await this.productRepository.create(data);
 
@@ -30,28 +30,25 @@ class ProductService {
   }
 
   async getProduct(data: {
-    ownerId?: string;
-    name?: string;
-    id?: string;
-  }): Promise<null | Product | Product[]> {
-    if (data.ownerId && data.name) {
-      const result = await this.productRepository.getByName({
-        ownerId: data.ownerId,
-        name: data.name,
-      });
+    ownerId: string;
+    name: string;
+  }): Promise<null | Product[]> {
+    const result = await this.productRepository.getByName({
+      ownerId: data.ownerId,
+      name: data.name,
+    });
 
-      if (result.length > 0) return result;
-
-      return null;
-    }
-
-    if (data.id) return await this.productRepository.getById({ id: data.id });
+    if (result.length > 0) return result;
 
     return null;
   }
 
+  async getById(data: { id: string }): Promise<null | Product> {
+    return await this.productRepository.getById(data);
+  }
+
   async update(data: UpdateProduct): Promise<null | string | Product> {
-    const productExist = await this.getProduct({ id: data.id });
+    const productExist = await this.getById({ id: data.id });
 
     if (!productExist) return null;
 
@@ -80,8 +77,41 @@ class ProductService {
     return result;
   }
 
+  async updateStock(data: {
+    product: Product;
+    productId: string;
+    type: "stockIn" | "stockOut";
+    quantity: number;
+  }): Promise<null | Product> {
+    const product = data.product;
+
+    if (data.type === "stockIn") {
+      if (product.stock == undefined) return null;
+
+      const value = product.stock + data.quantity;
+
+      return await this.productRepository.updateStock({
+        id: data.productId,
+        value,
+      });
+    }
+
+    if (data.type === "stockOut") {
+      if (product.stock == undefined) return null;
+
+      const value = product.stock - data.quantity;
+
+      return await this.productRepository.updateStock({
+        id: data.productId,
+        value,
+      });
+    }
+
+    return null;
+  }
+
   async delete(data: { id: string }): Promise<null | Product> {
-    const productExist = await this.getProduct(data);
+    const productExist = await this.getById(data);
 
     if (!productExist) return null;
 

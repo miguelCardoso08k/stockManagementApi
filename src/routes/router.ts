@@ -73,7 +73,7 @@ export const productsRoutes = async (fastify: FastifyInstance) => {
     async (req, reply) => {
       if (!req.userId)
         return reply.code(401).send({ error: "usuário não autenticado" });
-      const result = await productService.getProduct({
+      const result = await productService.getById({
         id: req.params.productId,
       });
 
@@ -242,30 +242,29 @@ export const stockRoutes = async (fastify: FastifyInstance) => {
   const stockMovementService = new StockMovementService();
   fastify.addHook("onRequest", AuthMiddleware);
 
-  fastify.post<{ Body: { productId: string; type: string; quantity: number } }>(
-    "/register",
-    async (req, reply) => {
-      if (!req.userId)
-        return reply.code(401).send({ error: "usuário não autenticado" });
-      const data = {
-        userId: req.userId,
-        productId: req.body.productId,
-        type: req.body.type,
-        quantity: req.body.quantity,
-      };
+  fastify.post<{
+    Body: { productId: string; type: "stockIn" | "stockOut"; quantity: number };
+  }>("/register", async (req, reply) => {
+    if (!req.userId)
+      return reply.code(401).send({ error: "usuário não autenticado" });
+    const data = {
+      userId: req.userId,
+      productId: req.body.productId,
+      type: req.body.type,
+      quantity: req.body.quantity,
+    };
 
-      const result = await stockMovementService.register(data);
+    const result = await stockMovementService.register(data);
 
-      if (!result)
-        return reply
-          .code(400)
-          .send({ error: "o ocorreu um erro ao criar movimentação" });
-
+    if (!result)
       return reply
-        .code(201)
-        .send({ message: "movimentação registrada", stockMovement: result });
-    }
-  );
+        .code(400)
+        .send({ error: "o ocorreu um erro ao criar movimentação" });
+
+    return reply
+      .code(201)
+      .send({ message: "movimentação registrada", stockMovement: result });
+  });
 
   fastify.get("/", async (req, reply) => {
     if (!req.userId)

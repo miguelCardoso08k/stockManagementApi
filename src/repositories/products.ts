@@ -99,6 +99,19 @@ class ProductRepositoryPrisma implements ProductRepository {
     return result;
   }
 
+  async updateStock(
+    data: UpdateProductPrisma & { value: number }
+  ): Promise<Product | null> {
+    return await prisma.product.update({
+      where: {
+        id: data.id,
+      },
+      data: {
+        stock: data.value,
+      },
+    });
+  }
+
   async delete(data: { id: string }): Promise<null | Product> {
     const result = await prisma.product.delete({
       where: {

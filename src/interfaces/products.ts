@@ -18,7 +18,7 @@ export interface CreateProduct {
 }
 
 export interface ModifyProduct {
-  column: "name" | "description" | "price" | "stock";
+  column: "name" | "description" | "price";
   value: string | Decimal;
 }
 
@@ -29,7 +29,7 @@ export interface UpdateProduct {
 
 export interface UpdateProductPrisma {
   id: string;
-  value: string | Decimal;
+  value: string | Decimal | number;
 }
 
 export interface ProductRepository {
@@ -40,5 +40,6 @@ export interface ProductRepository {
   updateName(data: UpdateProductPrisma): Promise<null | Product>;
   updateDescription(data: UpdateProductPrisma): Promise<null | Product>;
   updatePrice(data: UpdateProductPrisma): Promise<null | Product>;
+  updateStock(data: UpdateProductPrisma): Promise<null | Product>;
   delete(data: { id: string }): Promise<null | Product>;
 }
