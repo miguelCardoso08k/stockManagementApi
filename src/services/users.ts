@@ -9,6 +9,7 @@ import { UserRepositoryPrisma } from "../repositories/users.js";
 import { compare, hash } from "bcrypt";
 import jwt from "jsonwebtoken";
 import auth from "../config/auth/auth.json";
+import { invalidTokens } from "../middlewares/auth.js";
 
 class UserService {
   private userRepository: UserRepository;
@@ -53,6 +54,15 @@ class UserService {
     });
 
     return { message: "usuário conectado", token: token };
+  }
+
+  logout(data: { token: string }): boolean {
+    if (!invalidTokens.includes(data.token)) {
+      invalidTokens.push(data.token);
+
+      return true;
+    }
+    return false;
   }
 
   async getUser(data: {

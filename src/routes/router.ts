@@ -134,6 +134,56 @@ export const productsRoutes = async (fastify: FastifyInstance) => {
   );
 };
 
+export const privateUserRoutes = async (fastify: FastifyInstance) => {
+  fastify.addHook("onRequest", AuthMiddleware);
+  const userService = new UserService();
+
+  fastify.post<{ Body: { token: string } }>("/signOut", (req, reply) => {
+    const result = userService.logout({ token: req.body.token });
+
+    if (!result)
+      return reply.code(400).send({ erro: "ocorreu um erro ao deslogar" });
+
+    return reply.code(200).send({ message: "usuário delogado com sucesso" });
+  });
+
+  fastify.put<{
+    Params: { id: string };
+    Body: { modify: ModifyUser };
+  }>("/:id", async (req, reply) => {
+    const data: UpdateUser = {
+      id: req.params.id,
+      modify: {
+        column: req.body.modify.column,
+        value: req.body.modify.value,
+      },
+    };
+
+    const result = await userService.updateUser(data);
+
+    if (!result)
+      return reply.code(404).send({ error: "usuário não encontrado" });
+
+    if (result === "erro ao realizar atualização")
+      return reply
+        .code(500)
+        .send({ error: "ocorreu um erro ao tentar fazer atualização" });
+
+    return reply
+      .code(200)
+      .send({ message: "atualização feita com sucesso", user: result });
+  });
+
+  fastify.delete<{ Params: { id: string } }>("/:id", async (req, reply) => {
+    const result = await userService.delete(req.params);
+
+    if (!result)
+      return reply.code(404).send({ error: "usuário não encontrado" });
+
+    return reply.code(200).send(result);
+  });
+};
+
 export const userRoutes = async (fastify: FastifyInstance) => {
   const userService = new UserService();
 
@@ -197,42 +247,6 @@ export const userRoutes = async (fastify: FastifyInstance) => {
 
     if (!result)
       return reply.code(404).send({ error: "dados não encontrados" });
-
-    return reply.code(200).send(result);
-  });
-
-  fastify.put<{
-    Params: { id: string };
-    Body: { modify: ModifyUser };
-  }>("/:id", async (req, reply) => {
-    const data: UpdateUser = {
-      id: req.params.id,
-      modify: {
-        column: req.body.modify.column,
-        value: req.body.modify.value,
-      },
-    };
-
-    const result = await userService.updateUser(data);
-
-    if (!result)
-      return reply.code(404).send({ error: "usuário não encontrado" });
-
-    if (result === "erro ao realizar atualização")
-      return reply
-        .code(500)
-        .send({ error: "ocorreu um erro ao tentar fazer atualização" });
-
-    return reply
-      .code(200)
-      .send({ message: "atualização feita com sucesso", user: result });
-  });
-
-  fastify.delete<{ Params: { id: string } }>("/:id", async (req, reply) => {
-    const result = await userService.delete(req.params);
-
-    if (!result)
-      return reply.code(404).send({ error: "usuário não encontrado" });
 
     return reply.code(200).send(result);
   });
