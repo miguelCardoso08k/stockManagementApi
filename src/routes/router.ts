@@ -241,6 +241,7 @@ export const userRoutes = async (fastify: FastifyInstance) => {
 export const stockRoutes = async (fastify: FastifyInstance) => {
   const stockMovementService = new StockMovementService();
   fastify.addHook("onRequest", AuthMiddleware);
+
   fastify.post<{ Body: { productId: string; type: string; quantity: number } }>(
     "/register",
     async (req, reply) => {
@@ -263,6 +264,94 @@ export const stockRoutes = async (fastify: FastifyInstance) => {
       return reply
         .code(201)
         .send({ message: "movimentação registrada", stockMovement: result });
+    }
+  );
+
+  fastify.get("/", async (req, reply) => {
+    if (!req.userId)
+      return reply.code(401).send({ error: "usuário não autenticado" });
+
+    const result = await stockMovementService.getMovements({
+      userId: req.userId,
+    });
+
+    if (!result)
+      return reply.code(500).send({ error: "ocorreu algum erro interno" });
+
+    if (result.length < 1)
+      return reply
+        .code(404)
+        .send({ message: "nenhuma movimentação foi encontrada" });
+
+    return reply
+      .code(200)
+      .send({ message: "movimentações do estoque", movements: result });
+  });
+
+  fastify.get<{ Params: { productId: string } }>(
+    "/product/:productId",
+    async (req, reply) => {
+      if (!req.userId)
+        return reply.code(401).send({ error: "usuário não autenticado" });
+
+      const result = await stockMovementService.getMovementsOfProduct({
+        userId: req.userId,
+        productId: req.params.productId,
+      });
+
+      if (!result)
+        return reply.code(500).send({ erro: "ocorreu um erro interno" });
+
+      if (result.length < 1)
+        return reply
+          .code(404)
+          .send({ message: "nenhuma movimentação encontrada" });
+
+      return reply
+        .code(200)
+        .send({ message: "movimentações do estoque", movements: result });
+    }
+  );
+
+  fastify.get<{ Params: { stockMovementId: string } }>(
+    "/:stockMovementId",
+    async (req, reply) => {
+      if (!req.userId)
+        return reply.code(401).send({ error: "usuário não autenticado" });
+
+      const result = await stockMovementService.getById({
+        userId: req.userId,
+        stockMovementId: req.params.stockMovementId,
+      });
+
+      if (!result)
+        return reply
+          .code(404)
+          .send({ message: "nenhuma movimentação encontrada" });
+
+      return reply
+        .code(200)
+        .send({ message: "movimentação encontrada", movement: result });
+    }
+  );
+
+  fastify.delete<{ Params: { stockMovementId: string } }>(
+    "/:stockMovementId",
+    async (req, reply) => {
+      if (!req.userId)
+        return reply.code(401).send({ error: "usuário não autenticado" });
+
+      const result = await stockMovementService.delete({
+        userId: req.userId,
+        stockMovementId: req.params.stockMovementId,
+      });
+
+      if (!result)
+        return reply.code(404).send({ erro: "movimentação não encontrada" });
+
+      return reply
+        .code(200)
+        .send({ message: "movimentação removida", movement: result });
     }
   );
 };

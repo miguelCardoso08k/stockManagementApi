@@ -28,6 +28,35 @@ class StockMovementService {
 
     return result;
   }
+
+  async getMovements(data: { userId: string }): Promise<StockMovement[]> {
+    return await this.stockMovementRepository.getAll(data);
+  }
+
+  async getMovementsOfProduct(data: {
+    userId: string;
+    productId: string;
+  }): Promise<StockMovement[]> {
+    return await this.stockMovementRepository.getAllOfProduct(data);
+  }
+
+  async getById(data: {
+    userId: string;
+    stockMovementId: string;
+  }): Promise<StockMovement | null> {
+    return await this.stockMovementRepository.getById(data);
+  }
+
+  async delete(data: {
+    userId: string;
+    stockMovementId: string;
+  }): Promise<StockMovement | null> {
+    const movementExist = await this.getById(data);
+
+    if (!movementExist) return null;
+
+    return await this.stockMovementRepository.delete(data);
+  }
 }
 
 export { StockMovementService };
